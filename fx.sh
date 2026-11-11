@@ -1,5 +1,6 @@
 #!/bin/bash
-
+# fx.sh - convert an amount between two currencies using live rates
+# shellcheck disable=SC1091
 source "$(dirname "$0")/lib.sh"
 
 if [[ $# -ne 3 ]]; then
