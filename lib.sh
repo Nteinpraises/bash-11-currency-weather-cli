@@ -3,7 +3,7 @@
 die() {
     local code="$1"
     shift
-    echo "Error; $*" >$2
+    echo "Error; $*" >&2
     exit "$code"
 }
 
