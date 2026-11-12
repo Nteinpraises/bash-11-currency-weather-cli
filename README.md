@@ -15,6 +15,15 @@ in one command.
 - Exchange rates from open.er-api.com and weather from wttr.in
 - Git and GitHub (feature branch and pull request workflow)
 
+## Installation
+
+```bash
+sudo apt install curl jq
+git clone https://github.com/Nteinpraises/bash-11-currency-weather-cli.git
+cd bash-11-currency-weather-cli
+chmod +x fx.sh meteo.sh
+```
+
 ## fx.sh
 
 ```bash
@@ -26,11 +35,11 @@ decimals are allowed. The result shows the converted amount with 2 decimals
 and the rate used.
 
 ```text
-$ ./fx.sh 250 USD XAF
-250 USD = 145980.00 XAF   (rate 583.92)
+$ ./fx.sh 100 EUR XAF
+100 EUR = 65595.70 XAF   (rate 655.957)
 ```
 
-Rates change every day, so your numbers will differ.
+Most rates change every day, so your numbers will differ.
 
 ## meteo.sh
 
@@ -42,11 +51,11 @@ The city is the argument if given, otherwise the `METEO_CITY` variable,
 otherwise Yaounde. City names with spaces work.
 
 ```text
-$ ./meteo.sh Bamenda
-Bamenda: 19°C, light rain, humidity 88%
+$ ./meteo.sh Buea
+Buea: 17°C, light drizzle, humidity 93%
 ```
 
-## others
+## Shared Helpers
 
 `lib.sh` holds the helpers that both scripts load with `source`: `die`
 prints an error and stops with a chosen exit code, and `fetch` wraps
@@ -62,6 +71,15 @@ prints an error and stops with a chosen exit code, and `fetch` wraps
 $ ./fx.sh abc USD XAF; echo $?
 Error: amount must be a number, like 250 or 12.5
 2
+```
+
+With the network switched off:
+
+```text
+$ ./fx.sh 100 EUR XAF; echo $?
+curl: (6) Could not resolve host: open.er-api.com
+Error: request to https://open.er-api.com/v6/latest/EUR failed (it was either a network problem, timeout or rejected request)
+1
 ```
 
 ## How to Test It
@@ -80,7 +98,7 @@ It must print a clear error and exit with status 1.
 ## Known Limits
 
 - Rates are updated once a day by the free service.
-- The weather service decides what to do with a city it does not know.
+- The weather service answers an unknown city with an error, so the script reports a failed request and exits with status 1.
 - Accents and special characters in city names are not specially encoded.
 
 ## Author
