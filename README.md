@@ -1,103 +1,105 @@
-# To-Do App
+# Currency and Weather CLI
 
-This Bash script, `todo.sh`, manages a to-do list from the terminal.
+Two Bash scripts that talk to the internet: `fx.sh` converts currencies with live exchange rates, and `meteo.sh` shows the current weather for a city.
 
 ## Problem Statement
 
-Developers spend their day in the terminal, so checking tasks should not
-mean opening another app. `todo.sh` adds, lists, completes and deletes tasks
-with one short command each.
+Freelancers in Cameroon are often paid in dollars or euros and plan their
+day around the rain. These scripts answer both questions from the terminal
+in one command.
 
 ## Tech Stack
 
 - Bash
-- awk, sort and cut
+- curl, jq and awk
+- Exchange rates from open.er-api.com and weather from wttr.in
 - Git and GitHub (feature branch and pull request workflow)
 
 ## Installation
 
 ```bash
-git clone https://github.com/Nteinpraises/bash-10-todo-app.git
-cd bash-10-todo-app
-chmod +x todo.sh
+sudo apt install curl jq
+git clone https://github.com/Nteinpraises/bash-11-currency-weather-cli.git
+cd bash-11-currency-weather-cli
+chmod +x fx.sh meteo.sh
 ```
 
-## Commands
-
-Add a task. The priority is optional (low, medium or high) and defaults to
-medium. The `-p` option must come before the title:
-
-```text
-$ ./todo.sh add "Finish grade report"
-Added task 1
-$ ./todo.sh add -p high "Submit Day 9 fixes"
-Added task 2
-```
-
-List all tasks, high priority first:
-
-```text
-$ ./todo.sh list
-ID  STATUS  PRIORITY  TITLE
-2   todo    high      Submit Day 9 fixes
-1   todo    medium    Finish grade report
-```
-
-Mark a task as done:
-
-```text
-$ ./todo.sh done 1
-Task 1 done
-```
-
-Delete a task:
-
-```text
-$ ./todo.sh delete 2
-Task 2 deleted
-```
-
-Show the help message:
+## fx.sh
 
 ```bash
-./todo.sh help
+./fx.sh AMOUNT FROM TO
 ```
 
-Running `./todo.sh` with no arguments shows the list, or a friendly message
-when there are no tasks yet.
+Currency codes work in any case. The amount must be a positive number, and
+decimals are allowed. The result shows the converted amount with 2 decimals
+and the rate used.
 
-## Where Tasks Are Stored
+```text
+$ ./fx.sh 100 EUR XAF
+100 EUR = 65595.70 XAF   (rate 655.957)
+```
 
-Tasks are saved in `~/.local/share/todo/todo.txt`, one per line in the
-format `id|status|priority|title`. Set the `TODO_FILE` variable to use
-another file, which is useful for testing:
+Most rates change every day, so your numbers will differ.
+
+## meteo.sh
 
 ```bash
-export TODO_FILE=/tmp/todo-test.txt
+./meteo.sh [CITY]
 ```
 
-New tasks get the highest existing ID plus one. `done` and `delete` write
-the result to a temporary file and then replace the original with `mv`.
+The city is the argument if given, otherwise the `METEO_CITY` variable,
+otherwise Yaounde. City names with spaces work.
 
-## Errors
+```text
+$ ./meteo.sh Buea
+Buea: 17°C, light drizzle, humidity 93%
+```
 
-Each of these prints a message on stderr and exits with status 1:
+## Shared Helpers
 
-- `done` or `delete` with a missing, non-numeric or unknown ID
-- `add` with no title
-- A title containing the `|` character
-- A priority other than low, medium or high
-- An unknown command
+`lib.sh` holds the helpers that both scripts load with `source`: `die`
+prints an error and stops with a chosen exit code, and `fetch` wraps
+`curl -fsS --max-time 10`.
 
-## screenshot
+## Exit Codes
 
-![alt text](<assets/img/Pasted image.png>)
+- 0: success
+- 1: no network, a timeout or a service error
+- 2: bad input, such as a non-numeric amount, a code that is not 3 letters or an unknown currency
+
+```text
+$ ./fx.sh abc USD XAF; echo $?
+Error: amount must be a number, like 250 or 12.5
+2
+```
+
+With the network switched off:
+
+```text
+$ ./fx.sh 100 EUR XAF; echo $?
+curl: (6) Could not resolve host: open.er-api.com
+Error: request to https://open.er-api.com/v6/latest/EUR failed (it was either a network problem, timeout or rejected request)
+1
+```
+
+## How to Test It
+
+```bash
+./fx.sh 100 eur xaf
+./fx.sh abc USD XAF; echo $?
+./fx.sh 10 USD ZZZ; echo $?
+./meteo.sh
+./meteo.sh "Buea"
+```
+
+To test the network error, turn off Wi-Fi and run `./fx.sh 100 EUR XAF; echo $?`.
+It must print a clear error and exit with status 1.
 
 ## Known Limits
 
-- Deleting the task with the highest ID means the next task reuses that ID.
-- Titles cannot contain the `|` character.
-- IDs above 999 misalign the columns.
+- Rates are updated once a day by the free service.
+- The weather service answers an unknown city with an error, so the script reports a failed request and exits with status 1.
+- Accents and special characters in city names are not specially encoded.
 
 ## Author
 
